@@ -44,16 +44,6 @@ impl H256 {
 		}
 
 		let block_hash = hex::decode(s).map_err(|e| CoreError::FromHexError(e))?;
-
-		if block_hash.len() != 32 {
-			let msg = std::format!(
-				"Failed to convert string to H256. Expected 32 bytes for decoded value got {}. Decoded string: {:?}",
-				block_hash.len(),
-				block_hash
-			);
-			return Err(CoreError::ConversionError(msg));
-		}
-
 		let block_hash = TryInto::<[u8; 32]>::try_into(block_hash);
 		match block_hash {
 			Ok(v) => Ok(H256(v)),
@@ -64,6 +54,7 @@ impl H256 {
 		}
 	}
 }
+
 impl Encode for H256 {
 	fn size_hint(&self) -> usize {
 		self.0.size_hint()

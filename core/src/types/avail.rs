@@ -3,8 +3,7 @@ use crate::types::payload_fields::Call;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Deserializer};
 
-pub use super::payload_fields::Period;
-pub use super::payload_fields::Phase;
+pub use super::payload_fields::{Period, Phase};
 pub use calls::data_availability as DataAvailabilityCalls;
 
 pub type Tip = u128;
@@ -12,6 +11,25 @@ pub type Nonce = u32;
 pub type AppId = u32;
 pub type BlockNumber = u32;
 pub type BlockHeader = block::Header;
+
+#[derive(Debug, Deserialize)]
+pub struct RuntimeVersion {
+	#[serde(rename = "specName")]
+	pub spec_name: String,
+	#[serde(rename = "implName")]
+	pub impl_name: String,
+	#[serde(rename = "authoringVersion")]
+	pub authoring_version: u32,
+	#[serde(rename = "specVersion")]
+	pub spec_version: u32,
+	#[serde(rename = "implVersion")]
+	pub impl_version: u32,
+	pub apis: Vec<(String, u32)>,
+	#[serde(rename = "transactionVersion")]
+	pub transaction_version: u32,
+	#[serde(rename = "stateVersion")]
+	pub state_version: u8,
+}
 
 #[repr(u8)]
 pub enum Pallet {
@@ -45,25 +63,6 @@ pub mod calls {
 			)
 		}
 	}
-}
-
-#[derive(Debug, Deserialize)]
-pub struct RuntimeVersion {
-	#[serde(rename = "specName")]
-	pub spec_name: String,
-	#[serde(rename = "implName")]
-	pub impl_name: String,
-	#[serde(rename = "authoringVersion")]
-	pub authoring_version: u32,
-	#[serde(rename = "specVersion")]
-	pub spec_version: u32,
-	#[serde(rename = "implVersion")]
-	pub impl_version: u32,
-	pub apis: Vec<(String, u32)>,
-	#[serde(rename = "transactionVersion")]
-	pub transaction_version: u32,
-	#[serde(rename = "stateVersion")]
-	pub state_version: u8,
 }
 
 pub mod block {
@@ -351,36 +350,6 @@ pub mod block {
 pub mod events {
 	use super::*;
 
-	#[derive(Debug, Clone)]
-	pub struct EventRecord {
-		pub phase: Phase,
-		//#[serde(deserialize_with = "event_record_custom_deserializing")]
-		pub event: RuntimeEvent,
-		//#[serde(skip)]
-		pub topics: Vec<u32>,
-	}
-
-	impl<'de> Deserialize<'de> for EventRecord {
-		fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-		where
-			D: Deserializer<'de>,
-		{
-			let buf = serde_json::Value::deserialize(deserializer)?;
-			dbg!(buf);
-			todo!()
-		}
-	}
-
-	fn event_record_custom_deserializing<'de, D>(deserializer: D) -> Result<RuntimeEvent, D::Error>
-	where
-		D: Deserializer<'de>,
-	{
-		let buf = serde_json::Value::deserialize(deserializer)?;
-		dbg!(buf);
-
-		todo!()
-	}
-
 	#[derive(Debug, Clone, Deserialize)]
 	pub enum Phase {
 		/// Applying an extrinsic.
@@ -412,23 +381,6 @@ pub mod events {
 				_ => Err(parity_scale_codec::Error::from("Unknown Phase Index")),
 			}
 		}
-	}
-
-	#[derive(Debug, Clone, Deserialize)]
-	pub enum RuntimeEvent {
-		System(FrameSystemEvent),
-		Other,
-	}
-
-	#[derive(Debug, Clone, Deserialize)]
-	#[repr(u8)]
-	pub enum FrameSystemEvent {
-		//#[codec(index = 0)]
-		#[doc = "An extrinsic completed successfully."]
-		ExtrinsicSuccess = 0,
-		//#[codec(index = 1)]
-		#[doc = "An extrinsic failed."]
-		ExtrinsicFailed = 1,
 	}
 
 	/// Storage change set
