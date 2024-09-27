@@ -1,7 +1,7 @@
 use super::{AlreadyEncoded, H256};
 use crate::types::payload_fields::Call;
 use parity_scale_codec::{Decode, Encode};
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 pub use super::payload_fields::{Period, Phase};
 pub use calls::data_availability as DataAvailabilityCalls;
@@ -62,6 +62,121 @@ pub mod calls {
 				AlreadyEncoded(data.encode()),
 			)
 		}
+	}
+}
+
+pub mod kate {
+	use super::*;
+
+	#[derive(Debug, Clone, Copy, Deserialize)]
+	pub struct PreDispatchClass<T> {
+		/// Value for `Normal` extrinsics.
+		normal: T,
+		/// Value for `Operational` extrinsics.
+		operational: T,
+		/// Value for `Mandatory` extrinsics.
+		mandatory: T,
+	}
+
+	#[derive(Debug, Clone, Copy, Deserialize)]
+	pub struct BlockLength {
+		pub max: PreDispatchClass<u32>,
+		pub cols: u32,
+		pub rows: u32,
+		#[serde(rename = "chunkSize")]
+		pub chunk_size: u32,
+	}
+
+	#[derive(Debug, Clone, Deserialize)]
+	#[serde(rename_all = "camelCase")]
+	pub struct ProofResponse {
+		pub data_proof: DataProof,
+		pub messages: Option<AddressedMessage>,
+	}
+
+	#[derive(Debug, Clone, Deserialize)]
+	#[serde(rename_all = "camelCase")]
+	pub struct DataProof {
+		pub roots: TxDataRoots,
+		/// Proof items (does not contain the leaf hash, nor the root obviously).
+		///
+		/// This vec contains all inner node hashes necessary to reconstruct the root hash given the
+		/// leaf hash.
+		pub proof: Vec<H256>,
+		/// Number of leaves in the original tree.
+		///
+		/// This is needed to detect a case where we have an odd number of leaves that "get promoted"
+		/// to upper layers.
+		pub number_of_leaves: u32,
+		/// Index of the leaf the proof is for (0-based).
+		pub leaf_index: u32,
+		/// Leaf content.
+		pub leaf: H256,
+	}
+
+	#[derive(Debug, Clone, Deserialize)]
+	#[serde(rename_all = "camelCase")]
+	pub struct TxDataRoots {
+		/// Global Merkle root
+		pub data_root: H256,
+		/// Merkle root hash of submitted data
+		pub blob_root: H256,
+		/// Merkle root of bridged data
+		pub bridge_root: H256,
+	}
+
+	#[derive(Debug, Clone, Deserialize)]
+	#[serde(rename_all = "camelCase")]
+	pub struct AddressedMessage {
+		pub message: Message,
+		pub from: H256,
+		pub to: H256,
+		pub origin_domain: u32,
+		pub destination_domain: u32,
+		/// Unique identifier for the message
+		pub id: u64,
+	}
+
+	#[derive(Debug, Clone, Deserialize)]
+	pub enum Message {
+		ArbitraryMessage(Vec<u8>),
+		FungibleToken { asset_id: H256, amount: u128 },
+	}
+
+	pub type GRawScalar = primitive_types::U256;
+	pub type GRow = Vec<GRawScalar>;
+	pub type GDataProof = (GRawScalar, GProof);
+
+	#[derive(Debug, Clone, Deserialize)]
+	#[serde(try_from = "Vec<u8>", into = "Vec<u8>")]
+	pub struct GProof(pub [u8; 48]);
+
+	#[derive(Debug, Clone, Deserialize)]
+	pub struct U256(pub [u64; 4]);
+
+	impl From<GProof> for Vec<u8> {
+		fn from(proof: GProof) -> Self {
+			proof.0.to_vec()
+		}
+	}
+
+	impl TryFrom<Vec<u8>> for GProof {
+		type Error = u32;
+		fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
+			if data.len() != 48 {
+				return Err(data.len() as u32);
+			};
+
+			let mut proof = [0u8; 48];
+			proof.copy_from_slice(&data);
+			Ok(GProof(proof))
+		}
+	}
+
+	#[derive(Debug, Clone, Copy, Serialize)]
+	pub struct Cell {
+		pub row: u32,
+		pub col: u32,
 	}
 }
 
@@ -286,13 +401,6 @@ pub mod block {
 	pub enum HeaderExtension {
 		V3(V3HeaderExtension) = 2,
 	}
-	impl HeaderExtension {
-		pub fn to_human_readable(&self) -> String {
-			match self {
-				HeaderExtension::V3(x) => x.to_human_readable(),
-			}
-		}
-	}
 
 	#[derive(Debug, Clone, Deserialize)]
 	#[serde(rename_all = "camelCase")]
@@ -300,32 +408,18 @@ pub mod block {
 		pub app_lookup: DataLookup,
 		pub commitment: KateCommitment,
 	}
-	impl V3HeaderExtension {
-		pub fn to_human_readable(&self) -> String {
-			todo!()
-		}
-	}
 
 	#[derive(Debug, Clone, Deserialize)]
 	pub struct DataLookup {
 		pub size: u32,
 		pub index: Vec<DataLookupItem>,
 	}
-	impl DataLookup {
-		pub fn to_human_readable(&self) -> String {
-			todo!()
-		}
-	}
 
 	#[derive(Debug, Clone, Deserialize)]
+	#[serde(rename_all = "camelCase")]
 	pub struct DataLookupItem {
 		pub app_id: AppId,
 		pub start: u32,
-	}
-	impl DataLookupItem {
-		pub fn to_human_readable(&self) -> String {
-			todo!()
-		}
 	}
 
 	#[derive(Debug, Clone, Deserialize)]
@@ -339,11 +433,6 @@ pub mod block {
 		pub commitment: Vec<u8>,
 		/// The merkle root of the data submitted
 		pub data_root: H256,
-	}
-	impl KateCommitment {
-		pub fn to_human_readable(&self) -> String {
-			todo!()
-		}
 	}
 }
 

@@ -4,7 +4,11 @@ use jsonrpsee_http_client::HttpClient as JRPSHttpClient;
 use sdk_core::{
 	crypto::{AccountId, Ss58Codec},
 	types::{
-		avail::{block::SignedBlock, BlockHeader, RuntimeVersion},
+		avail::{
+			block::SignedBlock,
+			kate::{BlockLength, Cell, GDataProof, GRow, ProofResponse},
+			BlockHeader, RuntimeVersion,
+		},
 		OpaqueTransaction, H256,
 	},
 };
@@ -83,7 +87,7 @@ pub async fn account_nonce_api_account_nonce(
 
 pub async fn fetch_best_block_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
 	let value: Result<String, _> = client
-		.request::<String, _>("chain_getBlockHash", RpcParams::new())
+		.request::<_, _>("chain_getBlockHash", RpcParams::new())
 		.await;
 	let value: String = value.map_err(ClientError::from)?;
 
@@ -92,7 +96,7 @@ pub async fn fetch_best_block_hash(client: &JRPSHttpClient) -> Result<H256, Clie
 
 pub async fn fetch_finalized_block_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
 	let value: Result<String, _> = client
-		.request::<String, _>("chain_getFinalizedHead", RpcParams::new())
+		.request::<_, _>("chain_getFinalizedHead", RpcParams::new())
 		.await;
 	let value: String = value.map_err(ClientError::from)?;
 
@@ -101,7 +105,7 @@ pub async fn fetch_finalized_block_hash(client: &JRPSHttpClient) -> Result<H256,
 
 pub async fn chain_spec_v1_genesis_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
 	let value: Result<String, _> = client
-		.request::<String, _>("chainSpec_v1_genesisHash", RpcParams::new())
+		.request::<_, _>("chainSpec_v1_genesisHash", RpcParams::new())
 		.await;
 	let value: String = value.map_err(ClientError::from)?;
 
@@ -112,7 +116,7 @@ pub async fn state_get_runtime_version(
 	client: &JRPSHttpClient,
 ) -> Result<RuntimeVersion, ClientError> {
 	let value: Result<RuntimeVersion, _> = client
-		.request::<RuntimeVersion, _>("state_getRuntimeVersion", RpcParams::new())
+		.request::<_, _>("state_getRuntimeVersion", RpcParams::new())
 		.await;
 
 	value.map_err(ClientError::from)
@@ -127,9 +131,7 @@ pub async fn fetch_block_header(
 		params.push(hash.to_hex_string())?;
 	}
 
-	let value: Result<BlockHeader, _> = client
-		.request::<BlockHeader, _>("chain_getHeader", params)
-		.await;
+	let value: Result<BlockHeader, _> = client.request::<_, _>("chain_getHeader", params).await;
 
 	value.map_err(ClientError::from)
 }
@@ -143,9 +145,7 @@ pub async fn fetch_block(
 		params.push(hash.to_hex_string())?;
 	}
 
-	let value: Result<SignedBlock, _> = client
-		.request::<SignedBlock, _>("chain_getBlock", params)
-		.await;
+	let value: Result<SignedBlock, _> = client.request::<_, _>("chain_getBlock", params).await;
 
 	value.map_err(ClientError::from)
 }
@@ -158,9 +158,72 @@ pub async fn author_submit_extrinsic(
 	params.push(extrinsic.data.to_hex_string())?;
 
 	let value: Result<String, _> = client
-		.request::<String, _>("author_submitExtrinsic", params)
+		.request::<_, _>("author_submitExtrinsic", params)
 		.await;
 	let value: String = value.map_err(ClientError::from)?;
 
 	H256::from_hex_string(&value).map_err(ClientError::from)
+}
+
+pub async fn fetch_kate_block_length(
+	client: &JRPSHttpClient,
+	hash: Option<H256>,
+) -> Result<BlockLength, ClientError> {
+	let mut params: RpcParams = RpcParams::new();
+	if let Some(hash) = hash {
+		params.push(hash.to_hex_string())?;
+	}
+
+	let value: Result<BlockLength, _> = client.request::<_, _>("kate_blockLength", params).await;
+
+	value.map_err(ClientError::from)
+}
+
+pub async fn fetch_kate_query_data_proof(
+	client: &JRPSHttpClient,
+	transaction_index: u32,
+	hash: Option<H256>,
+) -> Result<ProofResponse, ClientError> {
+	let mut params: RpcParams = RpcParams::new();
+	params.push(transaction_index)?;
+	if let Some(hash) = hash {
+		params.push(hash.to_hex_string())?;
+	}
+
+	let value: Result<ProofResponse, _> =
+		client.request::<_, _>("kate_queryDataProof", params).await;
+
+	value.map_err(ClientError::from)
+}
+
+pub async fn fetch_kate_query_proof(
+	client: &JRPSHttpClient,
+	cells: Vec<Cell>,
+	hash: Option<H256>,
+) -> Result<Vec<GDataProof>, ClientError> {
+	let mut params: RpcParams = RpcParams::new();
+	params.push(cells)?;
+	if let Some(hash) = hash {
+		params.push(hash.to_hex_string())?;
+	}
+
+	let value: Result<Vec<GDataProof>, _> = client.request::<_, _>("kate_queryProof", params).await;
+
+	value.map_err(ClientError::from)
+}
+
+pub async fn fetch_kate_query_rows(
+	client: &JRPSHttpClient,
+	rows: Vec<u32>,
+	hash: Option<H256>,
+) -> Result<Vec<GRow>, ClientError> {
+	let mut params: RpcParams = RpcParams::new();
+	params.push(rows)?;
+	if let Some(hash) = hash {
+		params.push(hash.to_hex_string())?;
+	}
+
+	let value: Result<Vec<GRow>, _> = client.request::<_, _>("kate_queryRows", params).await;
+
+	value.map_err(ClientError::from)
 }
