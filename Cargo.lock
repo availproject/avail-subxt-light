@@ -69,10 +69,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
 
 [[package]]
-name = "avail-rust-light-client"
+name = "avail-subxt-light-client"
 version = "0.0.0"
 dependencies = [
- "avail-rust-light-core",
+ "avail-subxt-light-core",
  "blake2b_simd",
  "hex",
  "jsonrpsee-core",
@@ -84,7 +84,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "avail-rust-light-core"
+name = "avail-subxt-light-core"
 version = "0.0.0"
 dependencies = [
  "bip39",
@@ -99,10 +99,8 @@ dependencies = [
  "schnorrkel",
  "secrecy",
  "serde",
- "serde_json",
  "sha2",
  "ss58-registry",
- "tokio",
 ]
 
 [[package]]
@@ -286,8 +284,8 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 name = "example"
 version = "0.0.0"
 dependencies = [
- "avail-rust-light-client",
- "avail-rust-light-core",
+ "avail-subxt-light-client",
+ "avail-subxt-light-core",
  "tokio",
 ]
 

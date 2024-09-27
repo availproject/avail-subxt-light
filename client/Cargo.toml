@@ -1,5 +1,5 @@
 [package]
-name = "avail-rust-light-client"
+name = "avail-subxt-light-client"
 edition.workspace = true
 
 [dependencies]

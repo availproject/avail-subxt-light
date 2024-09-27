@@ -1,11 +1,12 @@
 [package]
-name = "avail-rust-light-core"
+name = "avail-subxt-light-core"
 edition.workspace = true
 
 [dependencies]
 parity-scale-codec.workspace = true
 hex.workspace = true
 blake2b_simd.workspace = true
+serde.workspace = true
 
 # Crypto
 schnorrkel.workspace = true
@@ -18,8 +19,3 @@ sha2.workspace = true
 ss58-registry.workspace = true
 bs58.workspace = true
 blake2.workspace = true
-
-# `jsonrpsee` already pulls `tokio`, `serde_json` and `serde`
-tokio.workspace = true
-serde_json.workspace = true
-serde.workspace = true
