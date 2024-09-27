@@ -8,6 +8,7 @@ members = [
 
 [workspace.package]
 edition = "2021"
+license = "Apache-2.0"
 
 [workspace.dependencies]
 parity-scale-codec = { version = "3.6.12", default-features = false }

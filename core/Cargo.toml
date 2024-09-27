@@ -1,6 +1,9 @@
 [package]
 name = "avail-subxt-light-core"
 edition.workspace = true
+license.workspace = true
+publish = true
+version = "0.1.0"
 
 [dependencies]
 parity-scale-codec.workspace = true
