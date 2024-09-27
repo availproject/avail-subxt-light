@@ -16,4 +16,4 @@ jsonrpsee-http-client.workspace = true
 jsonrpsee-core.workspace = true
 
 # Local dependencies
-sdk-core.workspace = true
+sdk-core = { workspace = true, version = "0.1.0" }

@@ -37,5 +37,5 @@ serde_json = { version = "1.0.128", default-features = false }
 serde = { version = "1.0.210", default-features = false, features = ["derive"] }
 
 # Local dependencies
-sdk-core = { package = "avail-subxt-light-core", path = "./core" }
+sdk-core = { package = "avail-subxt-light-core", path = "./core", version = "0.1.0" }
 sdk-client = { package = "avail-subxt-light-client", path = "./client" }
