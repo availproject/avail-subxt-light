@@ -4,6 +4,7 @@ edition.workspace = true
 license.workspace = true
 publish = true
 version = "0.1.0"
+description = "Avail Subxt Light Core Package"
 
 [dependencies]
 parity-scale-codec.workspace = true
