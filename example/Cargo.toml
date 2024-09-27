@@ -1,9 +1,11 @@
 [package]
-name = "example"
+name = "avail-subxt-light-example"
 edition.workspace = true
+license.workspace = true
+version = "0.1.0"
+description = "Avail Subxt Light Example"
 
 [dependencies]
-# Local dependencies
-sdk-core.workspace = true
-sdk-client.workspace = true
-tokio.workspace = true
+sdk-core = { package = "avail-subxt-light-core", version = "0.1.0" }
+sdk-client = { package = "avail-subxt-light-client", version = "0.1.0" }
+tokio = { version = "1.39.3", default-features = false }

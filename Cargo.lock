@@ -72,7 +72,23 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 name = "avail-subxt-light-client"
 version = "0.1.0"
 dependencies = [
- "avail-subxt-light-core",
+ "avail-subxt-light-core 0.1.0",
+ "hex",
+ "jsonrpsee-core",
+ "jsonrpsee-http-client",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "avail-subxt-light-client"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "086189941e7368211af142461f234d25889c341c67b6fc5a091013a6ec3217c3"
+dependencies = [
+ "avail-subxt-light-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex",
  "jsonrpsee-core",
  "jsonrpsee-http-client",
@@ -101,6 +117,38 @@ dependencies = [
  "serde",
  "sha2",
  "ss58-registry",
+]
+
+[[package]]
+name = "avail-subxt-light-core"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0a16530d4d3c1675a4747b41e4ef9409933b9261ce82f00a19a83ed0e29747c"
+dependencies = [
+ "bip39",
+ "blake2",
+ "blake2b_simd",
+ "bs58",
+ "hex",
+ "hmac",
+ "parity-scale-codec",
+ "pbkdf2",
+ "primitive-types",
+ "regex-lite",
+ "schnorrkel",
+ "secrecy",
+ "serde",
+ "sha2",
+ "ss58-registry",
+]
+
+[[package]]
+name = "avail-subxt-light-example"
+version = "0.1.0"
+dependencies = [
+ "avail-subxt-light-client 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "avail-subxt-light-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tokio",
 ]
 
 [[package]]
@@ -288,15 +336,6 @@ name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
-
-[[package]]
-name = "example"
-version = "0.0.0"
-dependencies = [
- "avail-subxt-light-client",
- "avail-subxt-light-core",
- "tokio",
-]
 
 [[package]]
 name = "fiat-crypto"
