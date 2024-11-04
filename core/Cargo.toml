@@ -12,6 +12,9 @@ hex.workspace = true
 blake2b_simd.workspace = true
 serde.workspace = true
 primitive-types.workspace = true
+frame-decode.workspace = true
+frame-metadata.workspace = true
+scale-value.workspace = true
 
 # Crypto
 schnorrkel.workspace = true

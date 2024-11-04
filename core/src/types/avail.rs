@@ -181,6 +181,14 @@ pub mod kate {
 }
 
 pub mod block {
+	use frame_decode::{
+		extrinsics::{decode_extrinsic_current, Extrinsic},
+		storage::decode_storage_value_current,
+	};
+	use frame_metadata::RuntimeMetadata;
+	use scale_value::{scale::ValueVisitor, Value};
+	use serde::de;
+
 	use super::*;
 
 	/// Consensus engine unique ID.
@@ -200,15 +208,60 @@ pub mod block {
 	#[derive(Debug, Clone, Deserialize)]
 	pub struct Block {
 		pub header: Header,
-		#[serde(deserialize_with = "decode_extrinsics")]
-		pub extrinsics: Vec<String>,
+		#[serde(deserialize_with = "decode_ext")]
+		pub extrinsics: Vec<Vec<u8>>,
 	}
 
-	fn decode_extrinsics<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+	fn decode_ext<'de, D>(deserializer: D) -> Result<Vec<Vec<u8>>, D::Error>
 	where
 		D: Deserializer<'de>,
 	{
-		Vec::deserialize(deserializer)
+		let buf = Vec::<String>::deserialize(deserializer)?;
+		let r: Result<Vec<Vec<u8>>, _> = buf
+			.into_iter()
+			.map(|ext| hex::decode(ext.trim_start_matches("0x")))
+			.collect();
+		r.map_err(|e| de::Error::custom(e))
+	}
+
+	pub fn decode_raw_extrinsics<'a>(
+		extrinsics: &[Vec<u8>],
+		metadata: &'a RuntimeMetadata,
+	) -> Result<Vec<Extrinsic<'a, u32>>, String> {
+		let mut extrinsic_info = Vec::with_capacity(extrinsics.len());
+		for ext in extrinsics {
+			let slice = ext.as_slice();
+			let ext_info = match metadata {
+				RuntimeMetadata::V14(m) => decode_extrinsic_current(&mut &*slice, m),
+				RuntimeMetadata::V15(m) => decode_extrinsic_current(&mut &*slice, m),
+				_ => return Err(String::from("Runtime not compatible")),
+			}
+			.map_err(|e| e.to_string())?;
+			extrinsic_info.push(ext_info);
+		}
+
+		Ok(extrinsic_info)
+	}
+
+	pub fn decode_raw_events<'a>(
+		events: &[u8],
+		metadata: &'a RuntimeMetadata,
+	) -> Result<Value<u32>, String> {
+		const PALLET_NAME: &str = "System";
+		const STORAGE_ENTRY: &str = "Events";
+		let visitor = ValueVisitor::new();
+		let cursor = &mut &*events;
+
+		match metadata {
+			RuntimeMetadata::V14(m) => {
+				decode_storage_value_current(PALLET_NAME, STORAGE_ENTRY, cursor, m, visitor)
+			},
+			RuntimeMetadata::V15(m) => {
+				decode_storage_value_current(PALLET_NAME, STORAGE_ENTRY, cursor, m, visitor)
+			},
+			_ => return Err(String::from("Runtime not compatible")),
+		}
+		.map_err(|e| e.to_string())
 	}
 
 	#[derive(Debug, Clone, Deserialize)]

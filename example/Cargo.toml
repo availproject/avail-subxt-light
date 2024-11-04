@@ -6,6 +6,14 @@ version = "0.1.0"
 description = "Avail Subxt Light Example"
 
 [dependencies]
-sdk-core = { package = "avail-subxt-light-core", version = "0.1.0" }
-sdk-client = { package = "avail-subxt-light-client", version = "0.1.0" }
+sdk-core = { package = "avail-subxt-light-core", path = "../core" }
+sdk-client = {package = "avail-subxt-light-client", path = "../client"}
 tokio = { version = "1.39.3", default-features = false }
+frame-decode.workspace = true
+frame-metadata.workspace = true
+parity-scale-codec.workspace = true
+hex.workspace = true
+scale-value.workspace = true
+scale-info.workspace = true
+serde.workspace = true
+serde_json.workspace = true

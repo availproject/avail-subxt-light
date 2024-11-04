@@ -122,6 +122,16 @@ pub async fn state_get_runtime_version(
 	value.map_err(ClientError::from)
 }
 
+pub async fn state_get_metadata(client: &JRPSHttpClient) -> Result<Vec<u8>, ClientError> {
+	let value: Result<String, _> = client
+		.request::<_, _>("state_getMetadata", RpcParams::new())
+		.await;
+
+	let encoded_value = value.map_err(ClientError::from)?;
+
+	hex::decode(encoded_value.trim_start_matches("0x")).map_err(ClientError::from)
+}
+
 pub async fn fetch_block_header(
 	client: &JRPSHttpClient,
 	hash: Option<H256>,
@@ -148,6 +158,24 @@ pub async fn fetch_block(
 	let value: Result<SignedBlock, _> = client.request::<_, _>("chain_getBlock", params).await;
 
 	value.map_err(ClientError::from)
+}
+
+pub async fn fetch_events(
+	client: &JRPSHttpClient,
+	hash: Option<H256>,
+) -> Result<Vec<u8>, ClientError> {
+	let mut params: RpcParams = RpcParams::new();
+	params
+		.push("0x26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7")
+		.unwrap();
+	if let Some(hash) = hash {
+		params.push(hash.to_hex_string())?;
+	}
+
+	let value: Result<String, _> = client.request::<_, _>("state_getStorage", params).await;
+	let encoded_value = value.map_err(ClientError::from)?;
+
+	hex::decode(encoded_value.trim_start_matches("0x")).map_err(ClientError::from)
 }
 
 pub async fn author_submit_extrinsic(

@@ -18,6 +18,10 @@ hex = { version = "0.4.3" }
 blake2b_simd = { version = "1.0.2", default-features = false }
 jsonrpsee-http-client = { version = "0.24.3", default-features = false }
 jsonrpsee-core = { version = "0.24.3", default-features = false }
+frame-decode = { version = "0.5.0" }
+frame-metadata = { version = "17.0.0" }
+scale-value = { version = "0.17.0" }
+scale-info = { version = "2.11.5" }
 
 # Crypto
 schnorrkel = { version = "0.11.4", default-features = false, features = ["getrandom"] }
