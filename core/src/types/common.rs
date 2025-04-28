@@ -43,7 +43,7 @@ impl H256 {
 			return Err(CoreError::ConversionError(msg));
 		}
 
-		let block_hash = hex::decode(s).map_err(|e| CoreError::FromHexError(e))?;
+		let block_hash = hex::decode(s).map_err(CoreError::FromHexError)?;
 		let block_hash = TryInto::<[u8; 32]>::try_into(block_hash);
 		match block_hash {
 			Ok(v) => Ok(H256(v)),

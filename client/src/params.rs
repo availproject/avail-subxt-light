@@ -1,8 +1,13 @@
-use sdk_core::types::{avail, H256};
+use sdk_core::{
+	crypto::AccountId,
+	types::{avail, H256},
+};
+
+use crate::{error::ClientError, http::Client, rpc};
 
 #[derive(Clone, Copy)]
 pub struct Extra {
-	nonce: Option<Nonce>,
+	nonce: Option<avail::Nonce>,
 	mortality: Option<Mortality>,
 	tip: Option<avail::Tip>,
 	app_id: Option<avail::AppId>,
@@ -17,7 +22,7 @@ impl Extra {
 		}
 	}
 
-	pub fn nonce(mut self, value: Nonce) -> Self {
+	pub fn nonce(mut self, value: avail::Nonce) -> Self {
 		self.nonce = Some(value);
 		self
 	}
@@ -37,24 +42,21 @@ impl Extra {
 		self
 	}
 
-	pub fn deconstruct(
+	pub async fn construct(
 		self,
-	) -> (
-		Option<Nonce>,
-		Option<Mortality>,
-		Option<avail::Tip>,
-		Option<avail::AppId>,
-	) {
-		(self.nonce, self.mortality, self.tip, self.app_id)
-	}
-}
+		client: &Client,
+		account_id: AccountId,
+	) -> Result<(u32, Mortality, avail::Tip, avail::AppId), ClientError> {
+		let tip = self.tip.unwrap_or(0u128);
+		let app_id = self.app_id.unwrap_or(0);
+		let nonce = match self.nonce {
+			None => rpc::system_account_next_index(&client.client, account_id).await?,
+			Some(n) => n,
+		};
+		let mortality = self.mortality.unwrap_or(Mortality::Period(32));
 
-#[derive(Clone, Copy)]
-pub enum Nonce {
-	BestBlock,
-	FinalizedBlock,
-	BestBlockAndTxPool,
-	Custom(u32),
+		Ok((nonce, mortality, tip, app_id))
+	}
 }
 
 #[derive(Clone, Copy)]

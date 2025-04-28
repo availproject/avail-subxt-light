@@ -64,9 +64,7 @@ impl Keypair {
 		let Ok(public) = schnorrkel::PublicKey::from_bytes(&public_key.0) else {
 			return false;
 		};
-		public
-			.verify_simple(SIGNING_CTX, message.as_ref(), &signature)
-			.is_ok()
+		public.verify_simple(SIGNING_CTX, message.as_ref(), &signature).is_ok()
 	}
 
 	/// Create am sr25519 keypair from a [`SecretUri`]. See the [`SecretUri`] docs for more.
@@ -124,12 +122,9 @@ impl Keypair {
 	/// ```
 	pub fn from_phrase(mnemonic: &bip39::Mnemonic, password: Option<&str>) -> Result<Self, Error> {
 		let (arr, len) = mnemonic.to_entropy_array();
-		let big_seed =
-			seed_from_entropy(&arr[0..len], password.unwrap_or("")).ok_or(Error::InvalidSeed)?;
+		let big_seed = seed_from_entropy(&arr[0..len], password.unwrap_or("")).ok_or(Error::InvalidSeed)?;
 
-		let seed: SecretKeyBytes = big_seed[..SECRET_KEY_LENGTH]
-			.try_into()
-			.expect("should be valid Seed");
+		let seed: SecretKeyBytes = big_seed[..SECRET_KEY_LENGTH].try_into().expect("should be valid Seed");
 
 		Self::from_secret_key(seed)
 	}

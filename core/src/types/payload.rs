@@ -45,9 +45,8 @@ impl UnsignedEncodedPayload {
 	}
 
 	pub fn sign(&self, signer: &Keypair) -> Signature {
-		let mut bytes: Vec<u8> = Vec::with_capacity(
-			self.call.size_hint() + self.extra.size_hint() + self.additional.size_hint(),
-		);
+		let mut bytes: Vec<u8> =
+			Vec::with_capacity(self.call.size_hint() + self.extra.size_hint() + self.additional.size_hint());
 
 		self.call.encode_to(&mut bytes);
 		self.extra.encode_to(&mut bytes);

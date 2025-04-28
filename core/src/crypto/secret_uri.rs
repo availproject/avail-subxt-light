@@ -95,9 +95,7 @@ impl core::str::FromStr for SecretUri {
 	type Err = SecretUriError;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let cap = secret_phrase_regex()
-			.captures(s)
-			.ok_or(SecretUriError::InvalidFormat)?;
+		let cap = secret_phrase_regex().captures(s).ok_or(SecretUriError::InvalidFormat)?;
 
 		let junctions = junction_regex()
 			.captures_iter(&cap["path"])
@@ -109,9 +107,7 @@ impl core::str::FromStr for SecretUri {
 
 		Ok(Self {
 			phrase: SecretString::from_str(phrase).expect("Returns infallible error; qed"),
-			password: password.map(|v| {
-				SecretString::from_str(v.as_str()).expect("Returns infallible error; qed")
-			}),
+			password: password.map(|v| SecretString::from_str(v.as_str()).expect("Returns infallible error; qed")),
 			junctions,
 		})
 	}
@@ -146,10 +142,7 @@ impl std::error::Error for SecretUriError {}
 fn secret_phrase_regex() -> Regex {
 	static SECRET_PHRASE_REGEX: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
 	SECRET_PHRASE_REGEX
-		.get_or_init(|| {
-			Regex::new(r"^(?P<phrase>[\d\w ]+)?(?P<path>(//?[^/]+)*)(///(?P<password>.*))?$")
-				.unwrap()
-		})
+		.get_or_init(|| Regex::new(r"^(?P<phrase>[\d\w ]+)?(?P<path>(//?[^/]+)*)(///(?P<password>.*))?$").unwrap())
 		.clone()
 }
 
@@ -172,5 +165,4 @@ fn junction_regex() -> Regex {
 }
 
 /// The root phrase for our publicly known keys.
-pub const DEV_PHRASE: &str =
-	"bottom drive obey lake curtain smoke basket hold race lonely fit walk";
+pub const DEV_PHRASE: &str = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";

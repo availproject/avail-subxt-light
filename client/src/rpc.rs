@@ -9,7 +9,7 @@ use sdk_core::{
 			kate::{BlockLength, Cell, GDataProof, GRow, ProofResponse},
 			BlockHeader, RuntimeVersion,
 		},
-		OpaqueTransaction, H256,
+		H256,
 	},
 };
 use serde::Serialize;
@@ -35,7 +35,7 @@ impl RpcParams {
 			0 => self.0.push(b'['),
 			_ => self.0.push(b','),
 		};
-		serde_json::to_writer(&mut self.0, &param).map_err(|e| ClientError::SerdeJson(e))?;
+		serde_json::to_writer(&mut self.0, &param).map_err(ClientError::SerdeJson)?;
 
 		Ok(())
 	}
@@ -52,18 +52,12 @@ impl RpcParams {
 	}
 }
 
-pub async fn system_account_next_index(
-	client: &JRPSHttpClient,
-	account_id: &AccountId,
-) -> Result<u32, ClientError> {
+pub async fn system_account_next_index(client: &JRPSHttpClient, account_id: AccountId) -> Result<u32, ClientError> {
 	let mut params = RpcParams::new();
 	params.push(account_id.to_ss58check())?;
 
-	let value: Result<u32, _> = client
-		.request::<u32, _>("system_accountNextIndex", params)
-		.await;
-
-	value.map_err(|e| ClientError::Jsonrpsee(e))
+	let value: Result<u32, _> = client.request::<u32, _>("system_accountNextIndex", params).await;
+	value.map_err(ClientError::Jsonrpsee)
 }
 
 pub async fn account_nonce_api_account_nonce(
@@ -79,104 +73,79 @@ pub async fn account_nonce_api_account_nonce(
 	params.push(Some(block_hash.to_hex_string()))?;
 
 	let encoded_value: Result<String, _> = client.request::<String, _>("state_call", params).await;
-	let encoded_value: String = encoded_value.map_err(ClientError::from)?;
-	let encoded_value = hex::decode(&encoded_value[2..]).map_err(ClientError::from)?;
+	let encoded_value: String = encoded_value.map_err(ClientError::Jsonrpsee)?;
+	let encoded_value = hex::decode(&encoded_value[2..]).map_err(ClientError::FromHexError)?;
 
-	u32::decode(&mut encoded_value.as_ref()).map_err(ClientError::from)
+	u32::decode(&mut encoded_value.as_ref()).map_err(ClientError::CodecError)
 }
 
 pub async fn fetch_best_block_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
-	let value: Result<String, _> = client
-		.request::<_, _>("chain_getBlockHash", RpcParams::new())
-		.await;
-	let value: String = value.map_err(ClientError::from)?;
+	let value: Result<String, _> = client.request::<_, _>("chain_getBlockHash", RpcParams::new()).await;
+	let value: String = value.map_err(ClientError::Jsonrpsee)?;
 
-	H256::from_hex_string(&value).map_err(ClientError::from)
+	H256::from_hex_string(&value).map_err(ClientError::Core)
 }
 
 pub async fn fetch_finalized_block_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
-	let value: Result<String, _> = client
-		.request::<_, _>("chain_getFinalizedHead", RpcParams::new())
-		.await;
-	let value: String = value.map_err(ClientError::from)?;
+	let value: Result<String, _> = client.request::<_, _>("chain_getFinalizedHead", RpcParams::new()).await;
+	let value: String = value.map_err(ClientError::Jsonrpsee)?;
 
-	H256::from_hex_string(&value).map_err(ClientError::from)
+	H256::from_hex_string(&value).map_err(ClientError::Core)
 }
 
 pub async fn chain_spec_v1_genesis_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
 	let value: Result<String, _> = client
 		.request::<_, _>("chainSpec_v1_genesisHash", RpcParams::new())
 		.await;
-	let value: String = value.map_err(ClientError::from)?;
+	let value: String = value.map_err(ClientError::Jsonrpsee)?;
 
-	H256::from_hex_string(&value).map_err(ClientError::from)
+	H256::from_hex_string(&value).map_err(ClientError::Core)
 }
 
-pub async fn state_get_runtime_version(
-	client: &JRPSHttpClient,
-) -> Result<RuntimeVersion, ClientError> {
+pub async fn state_get_runtime_version(client: &JRPSHttpClient) -> Result<RuntimeVersion, ClientError> {
 	let value: Result<RuntimeVersion, _> = client
 		.request::<_, _>("state_getRuntimeVersion", RpcParams::new())
 		.await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }
 
-pub async fn fetch_block_header(
-	client: &JRPSHttpClient,
-	hash: Option<H256>,
-) -> Result<BlockHeader, ClientError> {
+pub async fn fetch_block_header(client: &JRPSHttpClient, hash: Option<H256>) -> Result<BlockHeader, ClientError> {
 	let mut params: RpcParams = RpcParams::new();
 	if let Some(hash) = hash {
 		params.push(hash.to_hex_string())?;
 	}
 
 	let value: Result<BlockHeader, _> = client.request::<_, _>("chain_getHeader", params).await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }
 
-pub async fn fetch_block(
-	client: &JRPSHttpClient,
-	hash: Option<H256>,
-) -> Result<SignedBlock, ClientError> {
+pub async fn fetch_block(client: &JRPSHttpClient, hash: Option<H256>) -> Result<SignedBlock, ClientError> {
 	let mut params: RpcParams = RpcParams::new();
 	if let Some(hash) = hash {
 		params.push(hash.to_hex_string())?;
 	}
 
 	let value: Result<SignedBlock, _> = client.request::<_, _>("chain_getBlock", params).await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }
 
-pub async fn author_submit_extrinsic(
-	client: &JRPSHttpClient,
-	extrinsic: OpaqueTransaction,
-) -> Result<H256, ClientError> {
+pub async fn author_submit_extrinsic(client: &JRPSHttpClient, extrinsic: &[u8]) -> Result<H256, ClientError> {
 	let mut params = RpcParams::new();
-	params.push(extrinsic.data.to_hex_string())?;
+	params.push(std::format!("0x{}", hex::encode(extrinsic)))?;
 
-	let value: Result<String, _> = client
-		.request::<_, _>("author_submitExtrinsic", params)
-		.await;
-	let value: String = value.map_err(ClientError::from)?;
-
-	H256::from_hex_string(&value).map_err(ClientError::from)
+	let value: Result<String, _> = client.request::<_, _>("author_submitExtrinsic", params).await;
+	let value: String = value.map_err(ClientError::Jsonrpsee)?;
+	H256::from_hex_string(&value).map_err(ClientError::Core)
 }
 
-pub async fn fetch_kate_block_length(
-	client: &JRPSHttpClient,
-	hash: Option<H256>,
-) -> Result<BlockLength, ClientError> {
+pub async fn fetch_kate_block_length(client: &JRPSHttpClient, hash: Option<H256>) -> Result<BlockLength, ClientError> {
 	let mut params: RpcParams = RpcParams::new();
 	if let Some(hash) = hash {
 		params.push(hash.to_hex_string())?;
 	}
 
 	let value: Result<BlockLength, _> = client.request::<_, _>("kate_blockLength", params).await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }
 
 pub async fn fetch_kate_query_data_proof(
@@ -190,10 +159,8 @@ pub async fn fetch_kate_query_data_proof(
 		params.push(hash.to_hex_string())?;
 	}
 
-	let value: Result<ProofResponse, _> =
-		client.request::<_, _>("kate_queryDataProof", params).await;
-
-	value.map_err(ClientError::from)
+	let value: Result<ProofResponse, _> = client.request::<_, _>("kate_queryDataProof", params).await;
+	value.map_err(ClientError::Jsonrpsee)
 }
 
 pub async fn fetch_kate_query_proof(
@@ -208,8 +175,7 @@ pub async fn fetch_kate_query_proof(
 	}
 
 	let value: Result<Vec<GDataProof>, _> = client.request::<_, _>("kate_queryProof", params).await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }
 
 pub async fn fetch_kate_query_rows(
@@ -224,6 +190,5 @@ pub async fn fetch_kate_query_rows(
 	}
 
 	let value: Result<Vec<GRow>, _> = client.request::<_, _>("kate_queryRows", params).await;
-
-	value.map_err(ClientError::from)
+	value.map_err(ClientError::Jsonrpsee)
 }

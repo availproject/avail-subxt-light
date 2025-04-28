@@ -12,7 +12,7 @@ pub type AppId = u32;
 pub type BlockNumber = u32;
 pub type BlockHeader = block::Header;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct RuntimeVersion {
 	#[serde(rename = "specName")]
 	pub spec_name: String,
@@ -143,7 +143,7 @@ pub mod kate {
 		FungibleToken { asset_id: H256, amount: u128 },
 	}
 
-	pub type GRawScalar = primitive_types::U256;
+	pub type GRawScalar = U256;
 	pub type GRow = Vec<GRawScalar>;
 	pub type GDataProof = (GRawScalar, GProof);
 
@@ -269,20 +269,12 @@ pub mod block {
 				DigestItem::PreRuntime(x, y) => {
 					let name = String::from_utf8(x.to_vec()).unwrap();
 					let value = std::format!("0x{}", hex::encode(y));
-					result.push_str(&std::format!(
-						"DigestItem::PreRuntime [ {} {:?} ]",
-						name,
-						value
-					));
+					result.push_str(&std::format!("DigestItem::PreRuntime [ {} {:?} ]", name, value));
 				},
 				DigestItem::Consensus(x, y) => {
 					let name = String::from_utf8(x.to_vec()).unwrap();
 					let value = std::format!("0x{}", hex::encode(y));
-					result.push_str(&std::format!(
-						"DigestItem::Consensus [ {} {:?} ]",
-						name,
-						value
-					));
+					result.push_str(&std::format!("DigestItem::Consensus [ {} {:?} ]", name, value));
 				},
 				DigestItem::Seal(x, y) => {
 					let name = String::from_utf8(x.to_vec()).unwrap();
@@ -364,9 +356,7 @@ pub mod block {
 	} */
 
 	impl Decode for DigestItem {
-		fn decode<I: parity_scale_codec::Input>(
-			input: &mut I,
-		) -> Result<Self, parity_scale_codec::Error> {
+		fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
 			use parity_scale_codec::Decode as ParityDecode;
 			let index: u8 = u8::decode(input)?;
 
@@ -455,9 +445,7 @@ pub mod events {
 	}
 
 	impl Decode for Phase {
-		fn decode<I: parity_scale_codec::Input>(
-			input: &mut I,
-		) -> Result<Self, parity_scale_codec::Error> {
+		fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
 			let index: u8 = u8::decode(input)?;
 
 			match index {

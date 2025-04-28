@@ -7,7 +7,7 @@ use sdk_client::{
 	},
 	error::ClientError,
 	http::Client,
-	params::{Extra, Mortality, Nonce},
+	params::{Extra, Mortality},
 	rpc,
 };
 use std::str::FromStr;
@@ -63,16 +63,16 @@ async fn run_examples() -> Result<(), ClientError> {
 async fn create_application_key(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	let account_id = account.account_id();
 
-	let key = String::from("This is my key").as_bytes().to_vec();
+	/* 	let key = String::from("This is my key").as_bytes().to_vec();
 	let call = avail::calls::data_availability::create_application_key(key);
 	let extra = Extra::new();
 
 	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(&account);
+	let signature = unsigned_payload.sign(account);
 	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
 
 	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string());
+	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
 
 	Ok(())
 }
@@ -80,34 +80,34 @@ async fn create_application_key(client: &Client, account: &Keypair) -> Result<()
 async fn submit_data(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	let account_id = account.account_id();
 
-	let data = String::from("This is my Data").as_bytes().to_vec();
+	/* 	let data = String::from("This is my Data").as_bytes().to_vec();
 	let call = avail::calls::data_availability::submit_data(data);
 	let extra = Extra::new();
 
 	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(&account);
+	let signature = unsigned_payload.sign(account);
 	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
 
 	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string());
+	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
 
 	Ok(())
 }
 
 async fn manually_set_nonce(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	let account_id = account.account_id();
-	let next_nonce = rpc::system_account_next_index(&client.client, &account_id).await?;
+	let next_nonce = rpc::system_account_next_index(&client.client, account_id).await?;
 
-	let data = String::from("This is my Data").as_bytes().to_vec();
+	/* 	let data = String::from("This is my Data").as_bytes().to_vec();
 	let call = avail::calls::data_availability::submit_data(data);
-	let extra = Extra::new().nonce(Nonce::Custom(next_nonce));
+	let extra = Extra::new().nonce(next_nonce);
 
 	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(&account);
+	let signature = unsigned_payload.sign(account);
 	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
 
 	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string());
+	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
 
 	Ok(())
 }
@@ -115,16 +115,16 @@ async fn manually_set_nonce(client: &Client, account: &Keypair) -> Result<(), Cl
 async fn manually_set_mortality(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	let account_id = account.account_id();
 
-	let data = String::from("This is my Data").as_bytes().to_vec();
+	/* 	let data = String::from("This is my Data").as_bytes().to_vec();
 	let call = avail::calls::data_availability::submit_data(data);
 	let extra = Extra::new().mortality(Mortality::Period(8));
 
 	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(&account);
+	let signature = unsigned_payload.sign(account);
 	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
 
 	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string());
+	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
 
 	Ok(())
 }
@@ -132,16 +132,16 @@ async fn manually_set_mortality(client: &Client, account: &Keypair) -> Result<()
 async fn manually_set_app_id(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	let account_id = account.account_id();
 
-	let data = String::from("This is my Data").as_bytes().to_vec();
+	/* 	let data = String::from("This is my Data").as_bytes().to_vec();
 	let call = avail::calls::data_availability::submit_data(data);
 	let extra = Extra::new().app_id(1);
 
 	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(&account);
+	let signature = unsigned_payload.sign(account);
 	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
 
 	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string());
+	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
 
 	Ok(())
 }
@@ -195,17 +195,13 @@ async fn fetch_kate_block_length(client: &Client) -> Result<(), ClientError> {
 	Ok(())
 }
 
-async fn fetch_kate_query_data_proof(
-	client: &Client,
-	account: &Keypair,
-) -> Result<(), ClientError> {
+async fn fetch_kate_query_data_proof(client: &Client, account: &Keypair) -> Result<(), ClientError> {
 	wait_for_new_block(client).await?;
 	_ = manually_set_app_id(client, account).await;
 	let block_hash = wait_for_new_block(client).await?;
 	wait_for_block_finalization(client, block_hash).await?;
 
-	let proof_response =
-		rpc::fetch_kate_query_data_proof(&client.client, 1, Some(block_hash)).await?;
+	let proof_response = rpc::fetch_kate_query_data_proof(&client.client, 1, Some(block_hash)).await?;
 	println!("{:?}", proof_response);
 
 	Ok(())
@@ -251,16 +247,13 @@ async fn wait_for_new_block(client: &Client) -> Result<H256, ClientError> {
 
 async fn wait_for_block_finalization(client: &Client, block_hash: H256) -> Result<(), ClientError> {
 	println!("Waiting for the block to finalized");
-	let target_block_number = rpc::fetch_block_header(&client.client, Some(block_hash))
-		.await?
-		.number;
+	let target_block_number = rpc::fetch_block_header(&client.client, Some(block_hash)).await?.number;
 
 	loop {
 		let finalized_block_hash = rpc::fetch_finalized_block_hash(&client.client).await?;
-		let finalized_block_number =
-			rpc::fetch_block_header(&client.client, Some(finalized_block_hash))
-				.await?
-				.number;
+		let finalized_block_number = rpc::fetch_block_header(&client.client, Some(finalized_block_hash))
+			.await?
+			.number;
 		if finalized_block_number >= target_block_number {
 			return Ok(());
 		}

@@ -42,10 +42,7 @@ pub struct Extra {
 }
 impl Encode for Extra {
 	fn size_hint(&self) -> usize {
-		self.mortality.size_hint()
-			+ self.nonce.0.size_hint()
-			+ self.tip.0.size_hint()
-			+ self.app_id.0.size_hint()
+		self.mortality.size_hint() + self.nonce.0.size_hint() + self.tip.0.size_hint() + self.app_id.0.size_hint()
 	}
 
 	fn encode_to<T: parity_scale_codec::Output + ?Sized>(&self, dest: &mut T) {
@@ -59,16 +56,16 @@ impl Encode for Extra {
 #[derive(Debug, Clone)]
 pub struct Additional {
 	spec_version: u32,
-	tx_version: u32,
+	transaction_version: u32,
 	genesis_hash: H256,
 	fork_hash: H256,
 }
 
 impl Additional {
-	pub fn new(spec_version: u32, tx_version: u32, genesis_hash: H256, fork_hash: H256) -> Self {
+	pub fn new(spec_version: u32, transaction_version: u32, genesis_hash: H256, fork_hash: H256) -> Self {
 		Self {
 			spec_version,
-			tx_version,
+			transaction_version,
 			genesis_hash,
 			fork_hash,
 		}
@@ -78,14 +75,14 @@ impl Additional {
 impl Encode for Additional {
 	fn size_hint(&self) -> usize {
 		self.spec_version.size_hint()
-			+ self.tx_version.size_hint()
+			+ self.transaction_version.size_hint()
 			+ self.genesis_hash.size_hint()
 			+ self.fork_hash.size_hint()
 	}
 
 	fn encode_to<T: parity_scale_codec::Output + ?Sized>(&self, dest: &mut T) {
 		self.spec_version.encode_to(dest);
-		self.tx_version.encode_to(dest);
+		self.transaction_version.encode_to(dest);
 		self.genesis_hash.encode_to(dest);
 		self.fork_hash.encode_to(dest);
 	}
@@ -105,10 +102,7 @@ impl Era {
 	/// does not exceed `BlockHashCount` parameter passed to `system` module, since that
 	/// prunes old blocks and renders transactions immediately invalid.
 	pub fn mortal(period: Period, block_number: u64) -> Self {
-		let period = period
-			.checked_next_power_of_two()
-			.unwrap_or(1 << 16)
-			.clamp(4, 1 << 16);
+		let period = period.checked_next_power_of_two().unwrap_or(1 << 16).clamp(4, 1 << 16);
 		let phase = block_number % period;
 		let quantize_factor = (period >> 12).max(1);
 		let quantized_phase = phase / quantize_factor * quantize_factor;
@@ -133,8 +127,8 @@ impl Encode for Era {
 			Self::Immortal => dest.push_byte(0),
 			Self::Mortal(period, phase) => {
 				let quantize_factor = (*period >> 12).max(1);
-				let encoded = (period.trailing_zeros() - 1).clamp(1, 15) as u16
-					| ((phase / quantize_factor) << 4) as u16;
+				let encoded =
+					(period.trailing_zeros() - 1).clamp(1, 15) as u16 | ((phase / quantize_factor) << 4) as u16;
 				encoded.encode_to(dest);
 			},
 		}

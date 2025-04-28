@@ -36,9 +36,7 @@ impl Encode for DeriveJunction {
 }
 
 impl Decode for DeriveJunction {
-	fn decode<I: parity_scale_codec::Input>(
-		input: &mut I,
-	) -> Result<Self, parity_scale_codec::Error> {
+	fn decode<I: parity_scale_codec::Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
 		todo!()
 	}
 }

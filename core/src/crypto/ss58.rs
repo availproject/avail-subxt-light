@@ -1,14 +1,11 @@
 use ss58_registry::{from_known_address_format, Ss58AddressFormat, Ss58AddressFormatRegistry};
 
-static DEFAULT_VERSION: core::sync::atomic::AtomicU16 = core::sync::atomic::AtomicU16::new(
-	from_known_address_format(Ss58AddressFormatRegistry::SubstrateAccount),
-);
+static DEFAULT_VERSION: core::sync::atomic::AtomicU16 =
+	core::sync::atomic::AtomicU16::new(from_known_address_format(Ss58AddressFormatRegistry::SubstrateAccount));
 
 /// Returns default SS58 format used by the current active process.
 pub fn default_ss58_version() -> Ss58AddressFormat {
-	DEFAULT_VERSION
-		.load(core::sync::atomic::Ordering::Relaxed)
-		.into()
+	DEFAULT_VERSION.load(core::sync::atomic::Ordering::Relaxed).into()
 }
 
 /* /// Returns either the input address format or the default.
@@ -51,10 +48,7 @@ pub enum PublicError {
 	InvalidFormat,
 	#[cfg_attr(feature = "std", error("Invalid derivation path."))]
 	InvalidPath,
-	#[cfg_attr(
-		feature = "std",
-		error("Disallowed SS58 Address Format for this datatype.")
-	)]
+	#[cfg_attr(feature = "std", error("Disallowed SS58 Address Format for this datatype."))]
 	FormatNotAllowed,
 	#[cfg_attr(feature = "std", error("Password not allowed."))]
 	PasswordNotAllowed,
@@ -109,9 +103,7 @@ pub trait Ss58Codec: Sized + AsMut<[u8]> + AsRef<[u8]> + ByteArray {
 		const CHECKSUM_LEN: usize = 2;
 		let body_len = Self::LEN;
 
-		let data = bs58::decode(s)
-			.into_vec()
-			.map_err(|_| PublicError::BadBase58)?;
+		let data = bs58::decode(s).into_vec().map_err(|_| PublicError::BadBase58)?;
 		if data.len() < 2 {
 			return Err(PublicError::BadLength);
 		}
@@ -144,8 +136,7 @@ pub trait Ss58Codec: Sized + AsMut<[u8]> + AsRef<[u8]> + ByteArray {
 			return Err(PublicError::InvalidChecksum);
 		}
 
-		let result = Self::from_slice(&data[prefix_len..body_len + prefix_len])
-			.map_err(|()| PublicError::BadLength)?;
+		let result = Self::from_slice(&data[prefix_len..body_len + prefix_len]).map_err(|()| PublicError::BadLength)?;
 		Ok((result, format))
 	}
 
