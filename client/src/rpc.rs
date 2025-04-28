@@ -79,6 +79,17 @@ pub async fn account_nonce_api_account_nonce(
 	u32::decode(&mut encoded_value.as_ref()).map_err(ClientError::CodecError)
 }
 
+pub async fn fetch_block_hash(client: &JRPSHttpClient, height: Option<u32>) -> Result<H256, ClientError> {
+	let mut params = RpcParams::new();
+	if let Some(height) = height {
+		params.push(height)?;
+	}
+	let value: Result<String, _> = client.request::<_, _>("chain_getBlockHash", params).await;
+	let value: String = value.map_err(ClientError::Jsonrpsee)?;
+
+	H256::from_hex_string(&value).map_err(ClientError::Core)
+}
+
 pub async fn fetch_best_block_hash(client: &JRPSHttpClient) -> Result<H256, ClientError> {
 	let value: Result<String, _> = client.request::<_, _>("chain_getBlockHash", RpcParams::new()).await;
 	let value: String = value.map_err(ClientError::Jsonrpsee)?;

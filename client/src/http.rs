@@ -7,7 +7,7 @@ use sdk_core::{
 	types::{
 		self,
 		avail::{block::SignedBlock, BlockHeader, RuntimeVersion},
-		Additional, Call, Era, UnsignedEncodedPayload, UnsignedPayload, H256,
+		Additional, BlockId, Call, Era, UnsignedPayload, H256,
 	},
 };
 use std::sync::Arc;
@@ -56,19 +56,35 @@ impl Client {
 		self.runtime_version.clone()
 	}
 
-	pub async fn fetch_best_block_hash(&self) -> Result<H256, ClientError> {
+	pub async fn block_hash(&self, height: Option<u32>) -> Result<H256, ClientError> {
+		rpc::fetch_block_hash(&self.client, height).await
+	}
+
+	pub async fn best_block_hash(&self) -> Result<H256, ClientError> {
 		rpc::fetch_best_block_hash(&self.client).await
 	}
 
-	pub async fn fetch_finalized_block_hash(&self) -> Result<H256, ClientError> {
+	pub async fn finalized_block_hash(&self) -> Result<H256, ClientError> {
 		rpc::fetch_finalized_block_hash(&self.client).await
 	}
 
-	pub async fn fetch_block_header(&self, hash: Option<H256>) -> Result<BlockHeader, ClientError> {
+	pub async fn finalized_block_id(&self) -> Result<BlockId, ClientError> {
+		let hash = rpc::fetch_finalized_block_hash(&self.client).await?;
+		let height = rpc::fetch_block_header(&self.client, Some(hash)).await?.number;
+		Ok(BlockId { hash, height })
+	}
+
+	pub async fn finalized_block_height(&self) -> Result<u32, ClientError> {
+		let hash = rpc::fetch_finalized_block_hash(&self.client).await?;
+		let header = rpc::fetch_block_header(&self.client, Some(hash)).await?;
+		Ok(header.number)
+	}
+
+	pub async fn block_header(&self, hash: Option<H256>) -> Result<BlockHeader, ClientError> {
 		rpc::fetch_block_header(&self.client, hash).await
 	}
 
-	pub async fn fetch_block(&self, hash: Option<H256>) -> Result<SignedBlock, ClientError> {
+	pub async fn rpc_block(&self, hash: Option<H256>) -> Result<SignedBlock, ClientError> {
 		rpc::fetch_block(&self.client, hash).await
 	}
 
@@ -77,7 +93,7 @@ impl Client {
 		call: Call,
 		account_id: AccountId,
 		extra: Extra,
-	) -> Result<UnsignedEncodedPayload, ClientError> {
+	) -> Result<UnsignedPayload, ClientError> {
 		let (nonce, mortality, tip, app_id) = extra.construct(self, account_id).await?;
 
 		let app_id = Compact(app_id);
@@ -99,7 +115,7 @@ impl Client {
 			fork_hash,
 		);
 
-		Ok(UnsignedPayload::new(call, extra, additional).encode())
+		Ok(UnsignedPayload::new(call, extra, additional))
 	}
 
 	pub async fn submit_transaction(&self, transaction: &[u8]) -> Result<H256, ClientError> {
@@ -109,8 +125,8 @@ impl Client {
 	async fn check_mortality(&self, mortality: Mortality) -> Result<(Era, H256), ClientError> {
 		let (era, fork_hash) = match mortality {
 			Mortality::Period(period) => {
-				let hash = self.fetch_finalized_block_hash().await?;
-				let header = self.fetch_block_header(Some(hash)).await?;
+				let hash = self.finalized_block_hash().await?;
+				let header = self.block_header(Some(hash)).await?;
 				let number = header.number;
 				(Era::mortal(period, number as u64), hash)
 			},

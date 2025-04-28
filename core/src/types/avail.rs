@@ -459,13 +459,4 @@ pub mod events {
 			}
 		}
 	}
-
-	/// Storage change set
-	#[derive(Debug, Clone, Deserialize)]
-	pub struct StorageChangeSet {
-		/// Block hash
-		pub block: String,
-		/// A list of changes; tuples of storage key and optional storage data.
-		pub changes: Vec<Vec<String>>,
-	}
 }

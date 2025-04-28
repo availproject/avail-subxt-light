@@ -55,10 +55,10 @@ impl Encode for Extra {
 
 #[derive(Debug, Clone)]
 pub struct Additional {
-	spec_version: u32,
-	transaction_version: u32,
-	genesis_hash: H256,
-	fork_hash: H256,
+	pub spec_version: u32,
+	pub transaction_version: u32,
+	pub genesis_hash: H256,
+	pub fork_hash: H256,
 }
 
 impl Additional {

@@ -7,9 +7,9 @@ use parity_scale_codec::Encode;
 
 #[derive(Debug, Clone)]
 pub struct UnsignedPayload {
-	call: Call,
-	extra: Extra,
-	additional: Additional,
+	pub call: Call,
+	pub extra: Extra,
+	pub additional: Additional,
 }
 impl UnsignedPayload {
 	pub fn new(call: Call, extra: Extra, additional: Additional) -> Self {

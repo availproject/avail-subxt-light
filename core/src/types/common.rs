@@ -76,3 +76,72 @@ impl<'de> Deserialize<'de> for H256 {
 		Ok(H256::from_hex_string(&buf).unwrap())
 	}
 }
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct BlockId {
+	pub hash: H256,
+	pub height: u32,
+}
+
+impl BlockId {
+	pub fn new(hash: H256, height: u32) -> Self {
+		Self { hash, height }
+	}
+}
+
+impl From<(H256, u32)> for BlockId {
+	fn from(value: (H256, u32)) -> Self {
+		Self {
+			hash: value.0,
+			height: value.1,
+		}
+	}
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub enum BlockState {
+	Included,
+	Finalized,
+	Discarded,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct TransactionId {
+	pub block_hash: H256,
+	pub tx_index: u32,
+}
+
+impl From<(H256, u32)> for TransactionId {
+	fn from(value: (H256, u32)) -> Self {
+		Self {
+			block_hash: value.0,
+			tx_index: value.1,
+		}
+	}
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct TransactionLocation {
+	pub hash: H256,
+	pub index: u32,
+}
+
+impl From<(H256, u32)> for TransactionLocation {
+	fn from(value: (H256, u32)) -> Self {
+		Self {
+			hash: value.0,
+			index: value.1,
+		}
+	}
+}
+
+// (Pallet id, Call Id)
+pub type DispatchIndex = (u8, u8);
+// (Pallet id, Event Id)
+pub type EmittedIndex = (u8, u8);
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum HashIndex {
+	Hash(H256),
+	Index(u32),
+}

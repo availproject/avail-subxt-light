@@ -1,15 +1,20 @@
-//use crate::params::*;
 use sdk_client::{
-	core::crypto::{Keypair, SecretUri},
-	core::types::{
-		avail::{self, kate::Cell},
-		H256,
+	core::{
+		crypto::{Keypair, SecretUri},
+		types::{
+			avail::{self, kate::Cell},
+			H256,
+		},
 	},
+	custom_rpc,
 	error::ClientError,
 	http::Client,
-	params::{Extra, Mortality},
+	params::Extra,
 	rpc,
+	transaction::SubmittableTransaction,
+	watcher,
 };
+use sdk_core::types::HashIndex;
 use std::str::FromStr;
 
 pub fn main() {
@@ -26,11 +31,11 @@ async fn run_examples() -> Result<(), ClientError> {
 	let secret_uri = SecretUri::from_str("//Alice").unwrap();
 	let account = Keypair::from_uri(&secret_uri).unwrap();
 
-	println!("Create Application Key Example");
-	create_application_key(&client, &account).await?;
+	/* 	println!("Create Application Key Example");
+	create_application_key(&client, &account).await?; */
 	println!("Submit Data Example");
 	submit_data(&client, &account).await?;
-	println!("Manually Set Nonce Example");
+	/* 	println!("Manually Set Nonce Example");
 	manually_set_nonce(&client, &account).await?;
 	println!("Manually Set Mortality Example");
 	manually_set_mortality(&client, &account).await?;
@@ -55,7 +60,7 @@ async fn run_examples() -> Result<(), ClientError> {
 	println!("Fetch Kate Query Proof Example");
 	fetch_kate_query_proof(&client, &account).await?;
 	println!("Fetch Kate Query Rows Example");
-	fetch_kate_query_rows(&client, &account).await?;
+	fetch_kate_query_rows(&client, &account).await?; */
 
 	Ok(())
 }
@@ -77,19 +82,34 @@ async fn create_application_key(client: &Client, account: &Keypair) -> Result<()
 	Ok(())
 }
 
-async fn submit_data(client: &Client, account: &Keypair) -> Result<(), ClientError> {
-	let account_id = account.account_id();
+async fn submit_data(client: &Client, signer: &Keypair) -> Result<(), ClientError> {
+	let mut extension = custom_rpc::block_overview::ParamsExtension::default();
+	extension.fetch_events = true;
+	extension.enable_event_decoding = true;
 
-	/* 	let data = String::from("This is my Data").as_bytes().to_vec();
+	let params = custom_rpc::block_overview::Params {
+		block_id: HashIndex::Index(4),
+		extension,
+		filter: Default::default(),
+	};
+	let (response, duration) = custom_rpc::block_overview::request(&client.client, params).await?;
+	dbg!(response.transactions.len());
+	dbg!(duration);
+
+	let data = String::from("This is my Data").as_bytes().to_vec();
 	let call = avail::calls::data_availability::submit_data(data);
 	let extra = Extra::new();
 
-	let unsigned_payload = client.build_payload(call, account_id, extra).await?;
-	let signature = unsigned_payload.sign(account);
-	let transaction = client.build_transaction(&unsigned_payload, account_id, signature);
+	let tx = SubmittableTransaction::new(client.clone(), call, extra);
+	let info = tx.sign_and_submit_extra_info(signer).await?;
 
-	let transaction_hash = client.submit_transaction(transaction).await?;
-	println!("Transaction Hash: {}", transaction_hash.to_hex_string()); */
+	let period = match info.extra.mortality {
+		sdk_core::types::Era::Immortal => 100,
+		sdk_core::types::Era::Mortal(x, _) => x as u32,
+	};
+
+	let block_id = watcher::find_block_id(&client, (info.account_id, info.nonce()), (period, info.fork_hash())).await?;
+	let a = watcher::is_tx_in_block(&client, info.hash, block_id.unwrap().hash).await?;
 
 	Ok(())
 }
